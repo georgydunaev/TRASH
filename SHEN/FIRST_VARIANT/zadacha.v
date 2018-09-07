@@ -1,0 +1,136 @@
+(* PUBLIC DOMAIN *)
+Require Export Coq.Vectors.Vector.
+Require Export Coq.Lists.List.
+Require Import Bool.Bool.
+Require Import Logic.FunctionalExtensionality.
+Require Import Coq.Program.Wf.
+(* AIM 
+1) PROVE transitivity
+   1.1) DEFINE relation as Type.
+*)
+
+Definition SetVars  := nat.
+Definition FuncSymb := nat.
+Definition PredSymb := nat.
+Record FSV := {
+ fs : FuncSymb;
+ fsv : nat;
+}.
+Record PSV := MPSV{
+ ps : PredSymb;
+ psv : nat;
+}.
+Inductive Terms : Type :=
+| FVC :> SetVars -> Terms
+| FSC (f:FSV) : (Vector.t Terms (fsv f)) -> Terms.
+
+Definition rela : forall (x y:Terms), Prop.
+Proof.
+fix rela 2.
+intros x y.
+destruct y as [s|f t].
++ exact False.
++ refine (or _ _).
+  exact (Vector.In x t).
+  simple refine (@Vector.fold_left Terms Prop _ False (fsv f) t).
+  intros Q e.
+  exact (or Q (rela x e)).
+Defined.
+
+(*Definition rela : forall (x y:Terms), Type.
+Proof.
+fix rela 2.
+intros x y.
+destruct y as [s|f t].
++ exact False.
++ refine (or _ _).
+  exact (Vector.In x t).
+  simple refine (@Vector.fold_left Terms Type _ False (fsv f) t).
+  intros Q e.
+  exact (or Q (rela x e)).
+Defined.*)
+
+
+Definition snglV {A} (a:A) := Vector.cons A a 0 (Vector.nil A).
+
+Fixpoint Tra (a b c:Terms) (Hc : rela c b) (Hb : rela b a) {struct a}: rela c a.
+destruct a.
++ simpl in * |- *.
+  exact Hb.
++ simpl in * |- *.
+  destruct Hb.
+    destruct H.
+    * apply or_introl.
+      constructor 1.
+
+
+  - apply Tra with b.
+    trivial.
+    simpl in * |- *.
+    destruct H.
+    * apply or_introl.
+      constructor 1.
+    * apply or_introl.
+      constructor 2.
+      assumption.
+
+  - apply Tra with b.
+    trivial.
+    simpl in * |- *.
+    apply or_intror.
+    assumption.
+Defined.
+
+    destruct H.
+    * apply or_introl.
+      constructor 1.
+    * apply or_introl.
+      constructor 2.
+      assumption.
+
+@Vector.In
+contructor.
+unfold Vector.In.
+simpl.
+
+    * apply or_intror.
+      simpl in * |- *.
+
+      apply or_intror.
+
+  simpl in * |- *.
+
+Admitted.
+
+Definition wfr : @well_founded Terms rela.
+Proof.
+clear.
+unfold well_founded.
+assert (H : forall (n:Terms) (a:Terms), (rela a n) -> Acc rela a).
+{ fix iHn 1.
+  destruct n.
+  + simpl. intros a b. exfalso. exact b.
+  + simpl. intros a Q. destruct Q as [L|R].
+    * destruct L.
+      (*pose (G:= iHn m).*)
+      apply Acc_intro. intros q Hq.
+      apply Acc_intro. intros m Hm.
+      apply Acc_intro. intros q Hq.
+      apply (iHn a). apply Tra with m; assumption.
+    * apply Acc_intro. intros m Hm.
+      apply Acc_intro. intros q Hq.
+      apply (iHn a). apply Tra with m; assumption.
+
+(*      simpl in * |- *. 
+ exact Hm.
+
+ admit.  (*apply Acc_intro. intros m Hm. apply (iHn a). exact Hm. *)
+    * admit.  (* like in /Arith/Wf_nat.v *)*)
+}
+intros a.
+simple refine (H _ _ _).
+exact (FSC (Build_FSV 0 1) (snglV a)).
+simpl.
+apply or_introl.
+constructor.
+Defined.
