@@ -571,133 +571,9 @@ Definition ap {A B}{a0 a1:A} (f:A->B) (h:a0=a1):((f a0)=(f a1))
    | eq_refl => eq_refl
    end.
 
-Definition myap {A B}{a0 a1:A} (f:A->B) (h:myeq _ a0 a1):(myeq _ (f a0) (f a1)).
-Proof.
-destruct h.
-constructor.
-Show Proof.
-Defined.
-
-
-
-Lemma equal_a : forall (A B : Type) (f : A -> B) (a0 a1:A),
-  (a0 = a1) -> f a0 = f a1.
-Proof.
-intros A B f a0 a1 r.
-destruct r.
-reflexivity.
-Defined.
-
-(* Measure for terms: the sum of all functional symbols and variables. *)
-Definition meas:=
-(fix meas (u : Terms) : nat :=
-   match u with
-   | FVC _ => 1
-   | FSC f t0 =>
-       @Vector.fold_left nat nat Nat.add 1 (fsv f)
-         (@Vector.map Terms nat meas (fsv f) t0) + (fsv f)
-   end).
-Check Build_FSV 0 1.
-Compute (meas (FSC (Build_FSV 0 1) (Vector.cons _ (FVC 0) 0 (Vector.nil _)))).
-
-(*Program *)
-Fixpoint qlem1 (t : Terms) (xi : SetVars) (pi : SetVars->X) (u :Terms)
-:= match u with 
-   | FVC v => FVC (v+1)
-   | FSC f H => FSC f (Vector.map (qlem1 t xi pi) H)
-   end.
-
-
-(*(v:SetVars)(f:FSV)(H:t Terms (fsv f))*)
-(* lem1  (is not proven yet) *) 
-(*
-Fixpoint lem1 (t : Terms) (xi : SetVars) (pi : SetVars->X) (u :Terms)
-{struct u}
-:
-(teI pi (substT t xi u))=(teI (cng pi xi (teI pi t)) u).
-Proof.
-apply Terms_ind.
-Check Terms_ind. *)    
-Check True.
-
-Theorem myfe :forall (A B : Type) (f g : A -> B), 
-(forall x : A, myeq _ (f x) (g x)) -> myeq _ f g.
-Proof.
-intros.
-assert( KK : (forall x : A, f x = g x)).
-intro x.
-destruct (H x).
-reflexivity.
-
-pose(v:=(@functional_extensionality _ _ f g KK)).
-destruct (@functional_extensionality _ _ f g KK).
-reflexivity.
-Defined.
-
 
 Section Lem1.
 Context (t : Terms).
-
-Definition P(xi : SetVars) (pi : SetVars->X) (u :Terms)
-:=(teI pi (substT t xi u))=(teI (cng pi xi (teI pi t)) u).
-
-(** 
-Local Open Scope vector.**)
-Inductive InV {A} (a:A): forall {n}, Vector.t A n -> Type :=
- |In_cons_hd {m} (v: Vector.t A m): InV a (@Vector.cons A a m v)
- |In_cons_tl {m} x (v: Vector.t A m): InV a v -> InV a (@Vector.cons A x m v).
-
-Definition foma := @Vector.fold_left.
-(* \u0418\u0437\u043c\u0435\u0440\u0435\u043d\u0438\u0435 - \u043a\u043e\u0434\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 \u0442\u0435\u0440\u043c\u043e\u0432 \u0430\u0440\u0438\u0444\u043c\u0435\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u0435 x,y,z |-> c(x,y,z)*)
-(* \u041d\u0430\u0434\u043e \u043f\u0440\u0438\u0434\u0443\u043c\u0430\u0442\u044c wf-\u043e\u0442\u043d\u043e\u0448\u0435\u043d\u0438\u0435 \u043d\u0430 \u0442\u0435\u0440\u043c\u0430\u0445 *)
-(* x is less than y if ... *)
-Definition rela : forall (x y:Terms), Prop.
-Proof.
-fix rela 2.
-intros x y.
-destruct y.
-+ exact False.
-+ refine (or _ _).
-  exact (Vector.In x t0).
-  simple refine (@Vector.fold_left Terms Prop _ False (fsv f) t0).
-  intros Q e.
-  exact (or Q (rela x e)).
-Defined.
-
-Definition snglV {A} (a:A) := Vector.cons A a 0 (Vector.nil A).
-
-Require Import Arith Omega.
-From Equations Require Import Equations.
-Require Import Equations.Subterm.
-Derive Signature Subterm for vector.
-(*Derive Signature Subterm for Terms.*)
-Section equ.
-Context (*u :Terms*) (xi : SetVars)(pi : SetVars->X).
-
-Equations mid (u : Terms) :
-option ((teI pi (substT t xi u))=(teI (cng pi xi (teI pi t)) u)) :=
-(*  mid n by rec n lt := *)
-  mid (FVC s) := Some
-      (let b := s =? xi in
-       let ek : (s =? xi) = b := eq_refl in
-       (if b as b0
-         return
-           ((s =? xi) = b0 ->
-            teI pi (if b0 then t else s) = (if b0 then teI pi t else pi s))
-        then fun _ : (s =? xi) = true => eq_refl
-        else fun _ : (s =? xi) = false => eq_refl) ek)
-; mid (FSC f v) := None
-(*  mid (S (S n')) := S (mid n');
-   mid (S n') := S (mid n') *)
-.
-End equ.
-(*Equations mid (n : nat) : nat :=
-  mid n by rec n lt :=
-  mid 0 := 0;
-  mid (S (S n')) := S (mid n');
-  mid (S n') := S (mid n').*)
-
-
 
 (* page 136 of the book *)
 Definition lem1 : forall (u :Terms) (xi : SetVars) (pi : SetVars->X) ,
@@ -739,39 +615,91 @@ rewrite -> (nth_map (substT t xi) v p2 p2 eq_refl).
 exact (H p2).
 reflexivity.
 Defined.
-rewrite nth_map.
-compute.
-fold all.
-(*  simpl in t0.*)
-(* here!! *)
 
-  pose (g:= (@vec_comp_as _ _ _ (teI pi) (substT t xi) _ t0)).
-  rewrite -> g.
-(*Check (@vec_comp_as _ _ _ (teI ) (cng pi xi (teI pi t)) _ ).
-  pose (g:= (@vec_comp_as _ _ _ (teI pi) (substT t xi) _ t0)).
-  rewrite -> g.*)
+(*Theorem additi pi xi n (v:Vector.t _ n) :
+Vector.map (teI pi) (Vector.map (substT t xi) v) =
+Vector.map (teI (cng pi xi (teI pi t))) v.
+apply (*Check *)
+(proj1 (
+eq_nth_iff X fsv0 
+(Vector.map (teI pi) (Vector.map (substT t xi) v))
+(Vector.map (teI (cng pi xi (teI pi t))) v)
+)).
+intros.
+(*rewrite H0.*)
+ simpl in * |- *.
+(* now I need to show that .nth and .map commute *)
+Check nth_map (teI pi) (Vector.map (substT t xi) v) p1 p2 H0.
+rewrite -> (nth_map (teI pi) (Vector.map (substT t xi) v) p1 p2 H0).
+Check nth_map (teI (cng pi xi (teI pi t))) v.
+rewrite -> (nth_map (teI (cng pi xi (teI pi t))) v p2 p2 ).
+Check nth_map (substT t xi) v p2 p2 eq_refl.
+rewrite -> (nth_map (substT t xi) v p2 p2 eq_refl).
+exact (H p2).
+reflexivity.*)
 
-
-pose (Y:=fun wm => @Vector.map Terms X wm fsv0 t0).
-pose (a1:=(fun x : Terms => teI pi (substT t xi x))).
-pose (a2:=(teI (cng pi xi (teI pi t)))).
-pose (Y1:= Y a1).
-pose (Y2:= Y a2).
-unfold Y in Y1.
-unfold Y in Y2.
-fold Y1 Y2 in |- *.
-apply (@ap _ _ a1 a2 Y).
-unfold a1, a2 in |- *.
-apply functional_extensionality.
-    intro x.
-
-refine (lem1 x xi pi ).
-Show Proof.
-Abort.
 End Lem1.
 
+Theorem SomeInj {foo} :forall (a b : foo), Some a = Some b -> a = b.
+Proof.
+  intros a b H.
+  inversion H.
+  reflexivity.
+Defined.
 
-(* lem1  is not proven yet! *) 
+Theorem eq_equ (A B:Prop) : A=B -> (A <-> B).
+Proof.
+intro p. 
+destruct p.
+firstorder.
+Defined. (* rewrite p. firstorder. *)
+
+Theorem conj_eq (A0 B0 A1 B1:Prop)(pA:A0=A1)(pB:B0=B1): (A0 /\ B0) = (A1 /\ B1).
+Proof. destruct pA, pB; reflexivity. Defined.
+
+(* p.137 *)
+Section Lem2.
+Context (t : Terms).
+Definition lem2 : forall (r fi : Fo) (xi : SetVars) (pi : SetVars->X)
+(H:(substF t xi fi) = Some r),
+(foI pi r)=(foI (cng pi xi (teI pi t)) fi).
+Proof.
+fix lem2 1.
+intros.
+(*destruct (substF t xi fi) eqn: j.*)
+induction fi; simpl in *|-*.
++ pose (Q:=SomeInj _ _ H).
+  rewrite <- Q.
+  simpl.
+  (*apply eq_equ.*)
+  apply ap.
+  apply 
+    (proj1 (
+      eq_nth_iff X (psv p) 
+      (Vector.map (teI pi) (Vector.map (substT t xi) t0))
+      (Vector.map (teI (cng pi xi (teI pi t))) t0)
+    )).
+  rename t0 into v.
+  intros p1 p2 H0.
+  rewrite -> (nth_map (teI pi) (Vector.map (substT t xi) v) p1 p2 H0).
+  rewrite -> (nth_map (teI (cng pi xi (teI pi t))) v p2 p2 ).
+  rewrite -> (nth_map (substT t xi) v p2 p2 eq_refl).
+  apply lem1. reflexivity.
++ (*apply eq_equ.*) inversion H. trivial.
++ destruct (substF t xi fi1) as [f1|].
+  destruct (substF t xi fi2) as [f2|].
+  pose (Q:=SomeInj _ _ H).
+  rewrite <- Q.
+  apply conj_eq.
+  simpl in * |- *.
+Abort.
+(*
+Vector.map (teI pi) (Vector.map (substT t xi) v) =
+Vector.map (teI (cng pi xi (teI pi t))) v
+*)
+End Lem2.
+
+(* lem2  is not proven yet! *) 
 
 
 Fixpoint correct (f:Fo) (l:list Fo) (val:SetVars->X) (m:PR l f) 
@@ -800,7 +728,7 @@ simple refine (Z _ _ ).
   unfold foI. 
   simpl.
 *)
-Admitted.
+Abort.
 
 End cor.
 (* Definition ACK : list Fo := . *)
