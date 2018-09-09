@@ -92,6 +92,7 @@ Definition Terms_ind (T : Terms -> Prop)
 
 
 (*Formulas*)
+(*Unset Elimination Schemes.*)
 Inductive Fo :=
 |Atom (p:PSV) : (Vector.t Terms (psv p)) ->  Fo
 |Bot :Fo
@@ -101,6 +102,27 @@ Inductive Fo :=
 |Fora(x:SetVars)(f:Fo): Fo
 |Exis(x:SetVars)(f:Fo): Fo
 .
+(*Set Elimination Schemes.
+Section Fo_rect_section.
+Definition Fo_rect (T : Fo -> Type)
+                      (H_FVC : forall sv, T (FVC sv))
+                      (H_FSC : forall f v, (forall n, T (Vector.nth v n)) -> T (FSC f v)) :=
+  fix loopt (t : Terms) : T t :=
+    match t with
+    | FVC sv  => H_FVC sv
+    | FSC f v =>
+      let fix loopv s (v : Vector.t Terms s) : forall n, T (Vector.nth v n) :=
+        match v with
+        | @Vector.nil _ => Fin.case0 _
+        | @Vector.cons _ t _ v => fun n => Fin.caseS' n (fun n => T (Vector.nth (Vector.cons _ t _ v) n))
+                                                      (loopt t)
+                                                      (loopv _ v)
+        end in
+      H_FSC f v (loopv _ v)
+    end.
+End Fo_rect_section.*)
+
+
 (* Substitution *)
 
 Fixpoint substT (t:Terms) (xi: SetVars) (u:Terms): Terms. 
@@ -694,6 +716,121 @@ Theorem disj_eq (A0 B0 A1 B1:Prop)(pA:A0=A1)(pB:B0=B1): (A0 \/ B0) = (A1 \/ B1).
 Proof. destruct pA, pB; reflexivity. Defined.
 Theorem impl_eq (A0 B0 A1 B1:Prop)(pA:A0=A1)(pB:B0=B1): (A0 -> B0) = (A1 -> B1).
 Proof. destruct pA, pB; reflexivity. Defined.
+Lemma dbl_cng pi xi m1 m2: forall q,(cng (cng pi xi m1) xi m2) q = (cng pi xi m2) q.
+Proof. intro q. unfold cng. destruct (Nat.eqb q xi); reflexivity. Defined.
+
+
+Theorem l01 h n v :
+Vector.fold_left orb false (Vector.cons bool h n v) = Vector.fold_left orb (orb false h) v.
+Proof.
+simpl. reflexivity.
+Defined.
+(*Fixpoint {struct v}*)
+(*fold_left orb true v*)
+(*Lemma l00 h n v :  Vector.fold_left orb false (Vector.cons bool h n v) = false
+-> (h=false).
+intros.
+destruct h eqn:y.
+simpl in * |- *.
+simpl.
+auto. *)
+
+(** NOW SEE seq_of_bool.v **)
+Lemma all_then_some (A:Type)(n:nat)(p:Fin.t (n)) (v:Vector.t bool (n))
+(H : Vector.fold_left orb false v = false)
+ : (Vector.nth v p) = false.
+Proof.
+induction v.
+inversion p.
+rewrite -> l01 in H.
+destruct h.
+admit.
+simpl in H.
+(*pose (G:= IHv (@Fin.F1 n) H).
+simpl.
+destruct p.*)
+Abort.
+
+Lemma all_then_some (A:Type)(n:nat)(p:Fin.t (n)) (v:Vector.t A (n)) (P:A->bool)
+(H : Vector.fold_left orb false (Vector.map P v) = false)
+ : (P (Vector.nth v p)) = false.
+Proof.
+
+induction v.
+inversion p.
+Print Fin.t.
+Check Fin.F1.
+(*revert v.*)
+(*case_eq p.*)
+refine (match p as w with 
+  | @Fin.F1 k => _
+  | Fin.FS pp => _
+  end
+).
+(*revert v P H.
+destruct p eqn:w.
+intros v P H.
+simpl in p.
+2 : {
+simpl.
+Show Proof.
+destruct n.
+simpl.
+(*cbv in H.
+eval cbv delta [T] in H.in (get T's evar)
+Delta in H.*)
+
+apply all_then_some.
+simpl.
+simpl in H.
+exact H.
+Defined.
+unfold fold_left in H.
+simpl.
+Cons_map_commute?
+Print Fin.t.
+induction p.
+simpl.
+destruct p.
+simpl in p.*)
+Admitted.
+
+(* Not a parameter then not changed afted substitution (for Terms) *)
+Lemma NPthenNCAST (u:Terms)(xi:SetVars)(t:Terms) (H:(isParamT xi u=false))
+: (substT t xi u) = u.
+Proof. induction u.
++ simpl in * |- *.
+  rewrite H. reflexivity.
++ simpl in * |- *.
+  apply ap.
+apply eq_nth_iff.
+intros p1 p2 ppe.
+Check nth_map _ _ _ p2 ppe.
+rewrite (nth_map _ _ _ p2 ppe).
+apply H0.
+simpl.
+Admitted.
+(* Not a parameter then not changed afted substitution (for Formulas) *)
+Lemma NPthenNCASF (mu:Fo)(xi:SetVars)(t:Terms) (H:(isParamF xi mu=false))
+(ro:Fo)(J : substF t xi mu = Some ro)
+: ro=mu.
+Proof. induction mu. simpl in * |- *.
+(* map of equality: (Vector.map (substT t xi) t0)    ====   t0 *)
+assert (Z:(Vector.map (substT t xi) t0) = t0).
+* apply eq_nth_iff.
+  intros.
+  Check nth_map (substT t xi) t0 p1 p2 H0.
+  rewrite -> (nth_map (substT t xi) t0 p1 p2 H0).
+  apply NPthenNCAST.
+  apply all_then_some.
+  exact H.
+* rewrite Z in J.
+  apply SomeInj. symmetry. exact J.
+* simpl in * |- *.
+  apply SomeInj; symmetry; exact J.
+* simpl in * |- *.
+  (* Here A||B => A*)
+Admitted.
 
 (* p.137 *)
 Section Lem2.
@@ -705,8 +842,10 @@ Proof.
 fix lem2 1.
 intros fi xi pi.
 (*destruct (substF t xi fi) eqn: j.*)
-induction fi; simpl in *|-*; intros r H.
-+ pose (Q:=SomeInj _ _ H).
+(**)
+induction fi.
++  simpl in *|-*; intros r H.
+  pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
   simpl.
   (*apply eq_equ.*)
@@ -723,8 +862,10 @@ induction fi; simpl in *|-*; intros r H.
   rewrite -> (nth_map (teI (cng pi xi (teI pi t))) v p2 p2 ).
   rewrite -> (nth_map (substT t xi) v p2 p2 eq_refl).
   apply lem1. reflexivity.
-+ (*apply eq_equ.*) inversion H. trivial.
-+ destruct (substF t xi fi1) as [f1|].
++  simpl in *|-*; intros r H.
+   inversion H. trivial.
++  simpl in *|-*; intros r H.
+  destruct (substF t xi fi1) as [f1|].
   destruct (substF t xi fi2) as [f2|].
   pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
@@ -734,7 +875,8 @@ induction fi; simpl in *|-*; intros r H.
   * apply (IHfi2 f2 eq_refl).
   * inversion H.
   * inversion H.
-+ destruct (substF t xi fi1) as [f1|].
++ simpl in *|-*; intros r H.
+  destruct (substF t xi fi1) as [f1|].
   destruct (substF t xi fi2) as [f2|].
   pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
@@ -744,7 +886,8 @@ induction fi; simpl in *|-*; intros r H.
   * apply (IHfi2 f2 eq_refl).
   * inversion H.
   * inversion H.
-+ destruct (substF t xi fi1) as [f1|].
++ simpl in *|-*; intros r H.
+  destruct (substF t xi fi1) as [f1|].
   destruct (substF t xi fi2) as [f2|].
   pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
@@ -754,9 +897,36 @@ induction fi; simpl in *|-*; intros r H.
   * apply (IHfi2 f2 eq_refl).
   * inversion H.
   * inversion H.
-+ destruct (PeanoNat.Nat.eqb x xi) eqn:xxi.
++  intros r H.
+ destruct (isParamF xi (Fora x fi) ) eqn:tuc.
+2 : { 
+
+
+HJJHJHJH
+
+simpl.
+destruct (PeanoNat.Nat.eqb x xi) eqn:xxi.
+admit.
+admit.
+admit.
+  simpl in *|-*.
+ 
   pose (Q:=SomeInj _ _ H).
+  pose (E:=proj1 (@PeanoNat.Nat.eqb_eq x xi) xxi).
+  rewrite -> E.
+  rewrite <- Q.
+  simpl in * |- *.
+Check fun m=>(cng (cng pi xi (teI pi t)) xi m).
+Check fun m1 m2 =>(functional_extensionality _ _ (dbl_cng pi xi m1 m2)).
+(*rewrite -> (fun m=> (dbl_cng  pi xi (teI pi t) m)) .*)
  (*to be continued... *)
+  *
+(*rewrite -> IHfi.*)
+(*destruct fi; simpl.*)
+  admit.
+  * destruct (isParamF xi fi) eqn: yu.
+    destruct (isParamT x t) eqn: os.
+simpl.
 Abort.
 (*
 Vector.map (teI pi) (Vector.map (substT t xi) v) =
