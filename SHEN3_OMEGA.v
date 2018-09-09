@@ -496,15 +496,35 @@ inversion H.
 Defined.
 End sec0.
 
+Module ModProp.
+Definition Omega := Prop.
+Definition OFalse := False.
+Definition OAnd := and.
+Definition OOr := or.
+Definition OImp := (fun x y:Omega => x->y).
+End ModProp.
+
+Module ModBool.
+Definition Omega := bool.
+Definition OFalse := false.
+Definition OAnd := andb.
+Definition OOr := orb.
+Definition OImp := implb.
+End ModBool.
+
+(* Here we choose an interpretation. *)
+(*Export ModBool.*)
+Export ModProp. (* + classical axioms *)
+
 (** Correctness theorem **)
 (** for two-valued logic **)
 Section cor.
-Definition Omega := bool. (* Truth values*)
+ (* Truth values*)
 Context (X:Type).
 (*Context (val:SetVars->X).*)
 Context (fsI:forall(q:FSV),(Vector.t X (fsv q))->X).
-(*Context (prI:forall(q:PSV),(Vector.t X (psv q))->Omega).*)
-Context (prI:forall(q:PSV),(Vector.t X (psv q))->Prop).
+Context (prI:forall(q:PSV),(Vector.t X (psv q))->Omega).
+(*Context (prI:forall(q:PSV),(Vector.t X (psv q))->Prop).*)
 
 Fixpoint teI (val:SetVars->X) (t:Terms): X.
 Proof.
@@ -540,16 +560,30 @@ match Nat.eqb r xi with
 | false => (val r)
 end).
 
-Fixpoint foI (val:SetVars->X) (f:Fo): Prop.
+(*Inductive foI (val:SetVars->X) (f:Fo): Prop
+:=
+   | cAtom p t0 => ?Goal0@{t:=t0}
+.
+   | cBot => ?Goal
+   | cConj f1 f2 => ?Goal1
+   | cDisj f1 f2 => ?Goal2
+   | cImpl f1 f2 => ?Goal3
+   | cFora x f0 => ?Goal4@{f:=f0}
+   | cExis x f0 => ?Goal5@{f:=f0}
+.*)
+
+Fixpoint foI (val:SetVars->X) (f:Fo): Omega.
 Proof.
 destruct f.
+Show Proof.
 + refine (prI p _).
   apply (@Vector.map Terms X (teI val)).
   exact t.
-+ exact False.
-+ exact ( and (foI val f1) (foI val f2)).
-+ exact (  or (foI val f1) (foI val f2)).
-+ exact ( (foI val f1) -> (foI val f2)).
++ exact OFalse.
++ exact ( OAnd (foI val f1) (foI val f2)).
++ exact (  OOr (foI val f1) (foI val f2)).
++ exact ( OImp (foI val f1) (foI val f2)).
+Show Proof.
 + exact (forall m:X, foI (cng val x m) f).
 (*forall m:X, foI (fun r:SetVars =>
 match Nat.eqb r x with
@@ -656,6 +690,10 @@ Defined. (* rewrite p. firstorder. *)
 
 Theorem conj_eq (A0 B0 A1 B1:Prop)(pA:A0=A1)(pB:B0=B1): (A0 /\ B0) = (A1 /\ B1).
 Proof. destruct pA, pB; reflexivity. Defined.
+Theorem disj_eq (A0 B0 A1 B1:Prop)(pA:A0=A1)(pB:B0=B1): (A0 \/ B0) = (A1 \/ B1).
+Proof. destruct pA, pB; reflexivity. Defined.
+Theorem impl_eq (A0 B0 A1 B1:Prop)(pA:A0=A1)(pB:B0=B1): (A0 -> B0) = (A1 -> B1).
+Proof. destruct pA, pB; reflexivity. Defined.
 
 (* p.137 *)
 Section Lem2.
@@ -665,9 +703,9 @@ Definition lem2 : forall (fi : Fo) (xi : SetVars) (pi : SetVars->X)
 (foI pi r)=(foI (cng pi xi (teI pi t)) fi).
 Proof.
 fix lem2 1.
-intros.
+intros fi xi pi.
 (*destruct (substF t xi fi) eqn: j.*)
-induction fi; simpl in *|-*.
+induction fi; simpl in *|-*; intros r H.
 + pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
   simpl.
@@ -690,11 +728,35 @@ induction fi; simpl in *|-*.
   destruct (substF t xi fi2) as [f2|].
   pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
-  apply conj_eq.
+  apply conj_eq ;   fold foI.
   simpl in * |- *.
-  * fold foI. (* I shall not equalitybut equivalence!*)
-    pose (hack := ap (foI pi) Q).
-    unshelve eapply IHfi1.
+  * apply (IHfi1 f1 eq_refl).
+  * apply (IHfi2 f2 eq_refl).
+  * inversion H.
+  * inversion H.
++ destruct (substF t xi fi1) as [f1|].
+  destruct (substF t xi fi2) as [f2|].
+  pose (Q:=SomeInj _ _ H).
+  rewrite <- Q.
+  simpl in * |- *.
+  apply disj_eq ;   fold foI.
+  * apply (IHfi1 f1 eq_refl).
+  * apply (IHfi2 f2 eq_refl).
+  * inversion H.
+  * inversion H.
++ destruct (substF t xi fi1) as [f1|].
+  destruct (substF t xi fi2) as [f2|].
+  pose (Q:=SomeInj _ _ H).
+  rewrite <- Q.
+  simpl in * |- *.
+  apply impl_eq ;   fold foI.
+  * apply (IHfi1 f1 eq_refl).
+  * apply (IHfi2 f2 eq_refl).
+  * inversion H.
+  * inversion H.
++ destruct (PeanoNat.Nat.eqb x xi) eqn:xxi.
+  pose (Q:=SomeInj _ _ H).
+ (*to be continued... *)
 Abort.
 (*
 Vector.map (teI pi) (Vector.map (substT t xi) v) =
