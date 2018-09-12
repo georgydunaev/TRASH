@@ -6,6 +6,8 @@ Require Import Bool.Bool.
 Require Import Logic.FunctionalExtensionality.
 Require Import Coq.Program.Wf.
 Require Import Lia.
+Add LoadPath "/home/user/0my/COQ".
+Require Export UNIV_INST.
 
 Inductive myeq (A : Type) (x : A) : A -> Type :=
 | myeq_refl : myeq A x x.
@@ -737,7 +739,8 @@ simpl.
 auto. *)
 
 (** NOW SEE seq_of_bool.v **)
-Lemma all_then_some (A:Type)(n:nat)(p:Fin.t (n)) (v:Vector.t bool (n))
+Check all_then_someV.
+(*Lemma all_then_some (A:Type)(n:nat)(p:Fin.t (n)) (v:Vector.t bool (n))
 (H : Vector.fold_left orb false v = false)
  : (Vector.nth v p) = false.
 Proof.
@@ -750,51 +753,16 @@ simpl in H.
 (*pose (G:= IHv (@Fin.F1 n) H).
 simpl.
 destruct p.*)
-Abort.
+Abort.*)
 
-Lemma all_then_some (A:Type)(n:nat)(p:Fin.t (n)) (v:Vector.t A (n)) (P:A->bool)
+Lemma all_then_someP (A:Type)(n:nat)(p:Fin.t (n)) (v:Vector.t A (n)) (P:A->bool)
 (H : Vector.fold_left orb false (Vector.map P v) = false)
  : (P (Vector.nth v p)) = false.
 Proof.
-
-induction v.
-inversion p.
-Print Fin.t.
-Check Fin.F1.
-(*revert v.*)
-(*case_eq p.*)
-refine (match p as w with 
-  | @Fin.F1 k => _
-  | Fin.FS pp => _
-  end
-).
-(*revert v P H.
-destruct p eqn:w.
-intros v P H.
-simpl in p.
-2 : {
-simpl.
-Show Proof.
-destruct n.
-simpl.
-(*cbv in H.
-eval cbv delta [T] in H.in (get T's evar)
-Delta in H.*)
-
-apply all_then_some.
-simpl.
-simpl in H.
-exact H.
+Check nth_map P v p p eq_refl.
+rewrite <- (nth_map P v p p eq_refl).
+apply all_then_someV. trivial.
 Defined.
-unfold fold_left in H.
-simpl.
-Cons_map_commute?
-Print Fin.t.
-induction p.
-simpl.
-destruct p.
-simpl in p.*)
-Admitted.
 
 (* Not a parameter then not changed afted substitution (for Terms) *)
 Lemma NPthenNCAST (u:Terms)(xi:SetVars)(t:Terms) (H:(isParamT xi u=false))
@@ -810,12 +778,15 @@ Check nth_map _ _ _ p2 ppe.
 rewrite (nth_map _ _ _ p2 ppe).
 apply H0.
 simpl.
-Admitted.
+apply all_then_someP.
+trivial.
+Defined.
 (* Not a parameter then not changed afted substitution (for Formulas) *)
 Lemma NPthenNCASF (mu:Fo)(xi:SetVars)(t:Terms) (H:(isParamF xi mu=false))
-(ro:Fo)(J : substF t xi mu = Some ro)
-: ro=mu.
-Proof. induction mu. simpl in * |- *.
+: forall (ro:Fo)(J : substF t xi mu = Some ro)
+, ro=mu.
+Proof. induction mu.
+ simpl in * |- *.
 (* map of equality: (Vector.map (substT t xi) t0)    ====   t0 *)
 assert (Z:(Vector.map (substT t xi) t0) = t0).
 * apply eq_nth_iff.
@@ -823,14 +794,68 @@ assert (Z:(Vector.map (substT t xi) t0) = t0).
   Check nth_map (substT t xi) t0 p1 p2 H0.
   rewrite -> (nth_map (substT t xi) t0 p1 p2 H0).
   apply NPthenNCAST.
-  apply all_then_some.
+  apply all_then_someP.
   exact H.
-* rewrite Z in J.
+* intros.
+  rewrite Z in J.
   apply SomeInj. symmetry. exact J.
-* simpl in * |- *.
+* intros.
+  simpl in * |- *.
   apply SomeInj; symmetry; exact J.
-* simpl in * |- *.
-  (* Here A||B => A*)
+* intros.
+  simpl in * |- *.
+  pose (Q:=A1 _ _ H).
+  destruct Q as [H0 H1].
+  destruct (substF t xi mu1).
+  destruct (substF t xi mu2).
+  apply SomeInj; symmetry.
+  rewrite <- IHmu1 with f.
+  rewrite <- IHmu2 with f0.
+  exact J.
+  exact H1.
+  reflexivity.
+  exact H0.
+  reflexivity.
+  inversion J.
+  inversion J.
+* intros.
+  simpl in * |- *.
+  pose (Q:=A1 _ _ H).
+  destruct Q as [H0 H1].
+  destruct (substF t xi mu1).
+  destruct (substF t xi mu2).
+  apply SomeInj; symmetry.
+  rewrite <- IHmu1 with f.
+  rewrite <- IHmu2 with f0.
+  exact J.
+  exact H1.
+  reflexivity.
+  exact H0.
+  reflexivity.
+  inversion J.
+  inversion J.
+* intros.
+  simpl in * |- *.
+  pose (Q:=A1 _ _ H).
+  destruct Q as [H0 H1].
+  destruct (substF t xi mu1).
+  destruct (substF t xi mu2).
+  apply SomeInj; symmetry.
+  rewrite <- IHmu1 with f.
+  rewrite <- IHmu2 with f0.
+  exact J.
+  exact H1.
+  reflexivity.
+  exact H0.
+  reflexivity.
+  inversion J.
+  inversion J.
+* intros.
+  simpl in J.
+  destruct (PeanoNat.Nat.eqb x xi).
+   admit.
+ admit.
+* admit.
 Admitted.
 
 (* p.137 *)

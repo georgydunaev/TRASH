@@ -65,6 +65,33 @@ Definition G h (n:nat) (l:Vector.t bool n) :=
  @eq bool (@fold_left bool bool orb false (S n) (cons bool h n l)) false.
 
 
+Definition McaseS {A} (P : forall {n}, t A (S n) -> Prop)
+  (H : forall h {n} t, @P n (h :: t)) {n} (v: t A (S n)) : P v :=
+match v with
+  |h :: t => H h t
+  |_ => fun devil => False_ind (@IDProp) devil (* subterm !!! *)
+end.
+
+Definition McaseS' {A} {n : nat} (v : t A (S n)) : forall (P : t A (S n) -> Prop)
+  (H : forall h t, P (h :: t)), P v :=
+  match v with
+  | h :: t => fun P H => H h t
+  | _ => fun devil => False_ind (@IDProp) devil
+  end.
+
+
+Lemma vp1 (n:nat) (l : t bool (S n)) : exists (q:bool) (m:t bool n), l = (q::m).
+Check @caseS bool.
+Check @McaseS bool (fun n => 
+fun (l : t bool (S n)) => exists (q : bool) (m : t bool n), l = q :: m).
+apply (@McaseS bool (fun n => 
+fun (l : t bool (S n)) => exists (q : bool) (m : t bool n), l = q :: m)).
+intros.
+exists h.
+exists t.
+reflexivity.
+Defined.
+
 Fixpoint all_then_someV (n:nat) (l:Vector.t bool n) {struct l}:
 (Vector.fold_left orb false l ) = false ->
 (forall p, (Vector.nth l p  ) = false).
@@ -106,32 +133,6 @@ pose (Q:=A1 _ _ H0).
 destruct Q as [HH0 HH1].
 (* USE H!!!*)
 
-Definition McaseS {A} (P : forall {n}, t A (S n) -> Prop)
-  (H : forall h {n} t, @P n (h :: t)) {n} (v: t A (S n)) : P v :=
-match v with
-  |h :: t => H h t
-  |_ => fun devil => False_ind (@IDProp) devil (* subterm !!! *)
-end.
-
-Definition McaseS' {A} {n : nat} (v : t A (S n)) : forall (P : t A (S n) -> Prop)
-  (H : forall h t, P (h :: t)), P v :=
-  match v with
-  | h :: t => fun P H => H h t
-  | _ => fun devil => False_ind (@IDProp) devil
-  end.
-
-
-Lemma vp1 (n:nat) (l : t bool (S n)) : exists (q:bool) (m:t bool n), l = (q::m).
-Check @caseS bool.
-Check @McaseS bool (fun n => 
-fun (l : t bool (S n)) => exists (q : bool) (m : t bool n), l = q :: m).
-apply (@McaseS bool (fun n => 
-fun (l : t bool (S n)) => exists (q : bool) (m : t bool n), l = q :: m)).
-intros.
-exists h.
-exists t.
-reflexivity.
-Defined.
 
 pose (YO := vp1 n l).
 destruct YO as [YO1 [YO2 YO3]].
@@ -142,7 +143,7 @@ rewrite <- YO3.
 exact HH1.
 Defined.
 (*********************** THE END ***********)
-
+(*
 destruct l.
 eapply loop.
 unfold G.
@@ -171,20 +172,13 @@ Defined.
 
 
 
-
 simpl in H.
-
 unshelve eapply all_then_someV.
 
-
 unshelve eapply P.
-
 simpl.
-
 simpl in * |- *.
-
 exact n.
-
 destruct p.
 
 
@@ -298,3 +292,5 @@ Defined.
 (*induction p.*)
 Check caseS.
   destruct p. trivial.
+*)
+*)
