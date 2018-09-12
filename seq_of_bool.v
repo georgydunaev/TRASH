@@ -3,10 +3,32 @@ Require Vector.
 Require List.
 
 
+Fixpoint lemA2 q (n:nat) (v : Vector.t bool n):
+(Vector.fold_left orb q v )=false
+->(Vector.fold_left orb false v )=false.
+intro j.
+destruct q.
+2 : exact j.
+revert n v j. fix U 2. intros n v j.
+destruct v.
+simpl. trivial.
+simpl.
+simpl in j.
+Check (U n v).
+Check (lemA2 h n v).
+eapply  .
+
+destruct h.
+
+Fixpoint lemA1 (h:bool) (n:nat) (v : Vector.t bool n):
+(Vector.fold_left orb false (Vector.cons bool h n v) )=false
+-> h=false.
+intro q.
+simpl.
 
 
 Fixpoint all_then_some (A:Type) (l:list bool) {struct l}:
-(forall (b:bool), (List.fold_left orb l b)  = b) <->
+(forall (b:bool), (List.fold_left orb l b) = b) <->
 (forall (p:nat), (List.nth p l false) = false).
 Proof.
 destruct l.

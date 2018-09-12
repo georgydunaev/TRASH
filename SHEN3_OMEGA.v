@@ -1,4 +1,5 @@
 (* PUBLIC DOMAIN *)
+(* Author: Georgy Dunaev, georgedunaev@gmail.com *)
 Require Export Coq.Vectors.Vector.
 Require Export Coq.Lists.List.
 Require Import Bool.Bool.
