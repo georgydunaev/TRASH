@@ -202,22 +202,22 @@ exact (Some Bot).
 (*destruct (isParamF xi (Fora x0 u)).*)
 refine (match (isParamF xi (Fora x u)) with 
 | true => match (isParamT x t) with 
-          | true => match substF t xi u with
+          | false => match substF t xi u with
                     | Some q => Some (Fora x q)
                     | None => None
                     end
-          | false => None
+          | true => None
           end
-| false => Some u end).
-refine (match (isParamF xi (Fora x u)) with 
+| false => Some (Fora x u) end).
+refine (match (isParamF xi (Exis x u)) with 
 | true => match (isParamT x t) with 
-          | true => match substF t xi u with
+          | false => match substF t xi u with
                     | Some q => Some (Exis x q)
                     | None => None
                     end
-          | false => None
+          | true => None
           end
-| false => Some u end).
+| false => Some (Exis x u) end).
 Defined.
 
 
@@ -632,10 +632,10 @@ Definition ap {A B}{a0 a1:A} (f:A->B) (h:a0=a1):((f a0)=(f a1))
 
 
 Section Lem1.
-Context (t : Terms).
+(*Context (t : Terms).*)
 
 (* page 136 of the book *)
-Definition lem1 : forall (u :Terms) (xi : SetVars) (pi : SetVars->X) ,
+Definition lem1 (t : Terms) : forall (u :Terms) (xi : SetVars) (pi : SetVars->X) ,
 (teI pi (substT t xi u))=(teI (cng pi xi (teI pi t)) u).
 Proof.
 fix lem1 1.
@@ -781,8 +781,127 @@ simpl.
 apply all_then_someP.
 trivial.
 Defined.
+
+Lemma NPthenNCAST_vec:forall p xi t ts (H:(isParamF xi (Atom p ts)=false)), 
+  (Vector.map (substT t xi) ts) = ts.
+Proof.
+  intros p xi t1 ts H.
+  apply eq_nth_iff.
+  intros p1 p2 H0.
+  Check nth_map (substT t1 xi) ts p1 p2 H0.
+  rewrite -> (nth_map (substT t1 xi) ts p1 p2 H0).
+  apply NPthenNCAST.
+  apply all_then_someP.
+  simpl in H.
+  exact H.
+Defined.
+
+
 (* Not a parameter then not changed afted substitution (for Formulas) *)
-Lemma NPthenNCASF (mu:Fo)(xi:SetVars)(t:Terms) (H:(isParamF xi mu=false))
+Fixpoint NPthenNCASF (mu:Fo) : forall (xi:SetVars)(t:Terms) (H:(isParamF xi mu=false))
+   , substF t xi mu = Some mu .
+Proof. (*induction mu eqn:u0.*)
+destruct mu eqn:u0.
+Check t.
+* intros xi t0 H.
+  simpl.
+  rewrite -> NPthenNCAST_vec; (trivial || assumption).
+* intros xi t H.
+  simpl; trivial.
+* intros xi t H.
+  simpl.
+  simpl in H.
+  (*pose (Q:=A1 _ _ H).*)
+  destruct (A1 _ _ H) as [H0 H1].
+  rewrite -> NPthenNCASF .
+  rewrite -> NPthenNCASF .
+  (*rewrite -> IHf1 with xi t.
+  rewrite -> IHf2 with xi t.*)
+  trivial.
+  trivial.
+  trivial.
+* simpl.
+  intros xi t H.
+  destruct (A1 _ _ H) as [H0 H1].
+  rewrite -> NPthenNCASF .
+  rewrite -> NPthenNCASF .
+  (*rewrite -> IHmu1 with xi t.
+  rewrite -> IHmu2 with xi t.*)
+  trivial.
+  trivial.
+  trivial.
+* simpl.
+  intros xi t H.
+  destruct (A1 _ _ H) as [H0 H1].
+  rewrite -> NPthenNCASF .
+  rewrite -> NPthenNCASF .
+  trivial.
+  trivial.
+  trivial.
+* simpl.
+  intros xi t H.
+  destruct (PeanoNat.Nat.eqb x xi) eqn:u2.
+  trivial.
+  destruct (isParamF xi f) eqn:u1.
+  inversion H.
+  trivial.
+* simpl.
+  intros xi t H.
+  destruct (PeanoNat.Nat.eqb x xi) eqn:u2.
+  trivial.
+  destruct (isParamF xi f) eqn:u1.
+  inversion H.
+  trivial.
+Defined.
+
+
+(* Not a parameter then not changed afted substitution (for Formulas) *)
+Lemma NPthenNCASF (mu:Fo) : forall (xi:SetVars)(t:Terms) (H:(isParamF xi mu=false))
+  (ro:Fo)(J : substF t xi mu = Some ro)
+, ro=mu.
+Proof. induction mu.
+pose(ts:=t).
+(*assert (Z:forall xi t (H:(isParamF xi (Atom p ts)=false)), (Vector.map (substT t xi) ts) = ts).
+* intros xi t1 H.
+  apply eq_nth_iff.
+  intros p1 p2 H0.
+  Check nth_map (substT t1 xi) ts p1 p2 H0.
+  rewrite -> (nth_map (substT t1 xi) ts p1 p2 H0).
+  apply NPthenNCAST.
+  apply all_then_someP.
+  simpl.
+  exact H.*)
+* intros xi t0 H ro J. 
+  simpl in * |- *.
+  rewrite Z  in J.
+  apply SomeInj. symmetry. exact J. trivial.
+* intros xi t0 H ro J. 
+  simpl in * |- *.
+  apply SomeInj. symmetry. exact J.
+* intros xi t0 H ro J.
+  simpl in * |- *.
+  pose (Q:=A1 _ _ H).
+  destruct Q as [H0 H1].
+  destruct (substF t0 xi mu1).
+  destruct (substF t0 xi mu2).
+  apply SomeInj; symmetry.
+  rewrite <- IHmu1 with xi t0 f.
+  rewrite <- IHmu2 with xi t0 f0.
+  exact J.
+  exact H1.
+(*simpl in *|- *.
+  reflexivity.
+  exact H0.
+  reflexivity.
+  inversion J.
+  inversion J.
+  simpl in * |- *.
+  apply SomeInj. symmetry. exact J.*)
+Abort.
+
+
+
+Lemma NPthenNCASF (mu:Fo) (xi:SetVars)(t:Terms) (H:(isParamF xi mu=false))
 : forall (ro:Fo)(J : substF t xi mu = Some ro)
 , ro=mu.
 Proof. induction mu.
@@ -796,7 +915,7 @@ assert (Z:(Vector.map (substT t xi) t0) = t0).
   apply NPthenNCAST.
   apply all_then_someP.
   exact H.
-* intros.
+* intros ro J.
   rewrite Z in J.
   apply SomeInj. symmetry. exact J.
 * intros.
@@ -852,7 +971,10 @@ assert (Z:(Vector.map (substT t xi) t0) = t0).
   inversion J.
 * intros.
   simpl in J.
-  destruct (PeanoNat.Nat.eqb x xi).
+  destruct (isParamF xi mu) eqn:u1.
+  destruct (PeanoNat.Nat.eqb x xi) eqn:u2.
+simpl in H.
+rewrite u2 in H.
    admit.
  admit.
 * admit.
