@@ -9,6 +9,9 @@ Require Import Lia.
 Add LoadPath "/home/user/0my/COQ".
 Require Export UNIV_INST.
 
+Require Import Logic.ClassicalFacts.
+Axiom EquivThenEqual: prop_extensionality.
+
 Inductive myeq (A : Type) (x : A) : A -> Type :=
 | myeq_refl : myeq A x x.
 
@@ -943,8 +946,12 @@ induction fi.
   * apply (IHfi2 f2 eq_refl).
   * inversion H.
   * inversion H.
-+  intros r H.
-simpl in * |- *.
++ intros r H.
+  (*simpl in * |- *.
+  destruct (PeanoNat.Nat.eqb x xi) eqn:j0.
+  * destruct (isParamF xi (Fora x fi) ) eqn:tuc.
+    - 
+  simpl.*)
  destruct (isParamF xi (Fora x fi) ) eqn:tuc.
 2 : { 
 Check NPthenNCASF.
@@ -962,6 +969,87 @@ inversion tuc.
 reflexivity.
 assumption.
 }
+simpl in tuc.
+simpl in H.
+destruct (PeanoNat.Nat.eqb x xi) eqn:k1.
+inversion tuc.
+rewrite tuc in H.
+destruct (isParamT x t) eqn:k2.
+inversion H.
+destruct (substF t xi fi) eqn:k3.
+2 : inversion H.
+pose(Q:=SomeInj _ _ H).
+rewrite <- Q.
+simpl in *|-*.
+assert (AS0 : exists ro:Fo, (substF t xi fi) = Some ro).
+ exists f.
+ exact k3. clear AS0.
+apply EquivThenEqual.
+split.
+intros.
+pose (K:=H0 m).
+rewrite -> lem2 with (fi:=fi) (xi:=xi) in K .
+2 : exact k3.
+Abort.
+End Lem2. (*temporary*)
+Lemma mqd x t pi m (H:isParamT x t = false): (teI (cng pi x m) t) = (teI pi t).
+induction t; simpl.
+(**** HERE IS THE DEVELOPMENT ****)
+
+(* rewrite IHfi in H0. ne pomozhet *)
+assert (AS1 : 
+simpl in *|-*.
+(*
+Abort.
+End Lem2. (*temporary*)
+Fixpoint lmi t xi x psi r : substF t xi (Fora x psi) = Some r -> 
+        exists ro:Fo, (substF t xi psi) = Some ro.
+Proof.
+intros H.
+simpl in H.
+destruct (PeanoNat.Nat.eqb x xi) eqn:k1.
+destruct r eqn:ln.
+inversion H.
+inversion H.
+inversion H.
+inversion H.
+inversion H.
+exists psi.
+reflexivity.
+
+simpl in *|-*.
+simpl .
+
+(SomeInj _ _ H).
+simpl in *|-*.
+
+(*unfold substF in H.*)
+(*cbv delta in H.*)
+simpl in H.
+destruct (substF t xi (Fora x psi)) eqn:k2.
+
+
+pose(Y:=(substF t xi (Fora x psi))).
+destruct (substF t xi (psi)) eqn:k0.
+exists f0.
+reflexivity.
+simpl in k2, Y.
+destruct (PeanoNat.Nat.eqb x xi) eqn:k1.
+induction r.
+inversion H.
+inversion H.
+inversion H.
+inversion H.
+inversion H.
+
+*)
+
+fold substF in H.
+induction (substF t xi (psi)) eqn:e1.
+exists a; reflexivity.
+induction (substF t xi (Fora x psi)) eqn:e1.
+
+
 simpl in *|-*.
 destruct (PeanoNat.Nat.eqb x xi) eqn:k1.
 inversion tuc.
@@ -973,8 +1061,15 @@ simpl in *|-*.
 pose(Q:=SomeInj _ _ H).
 rewrite <- Q.
 simpl in *|-*.
+(*p.137.*)
+assert (AS0 : exists ro:Fo, (substF t xi f) = Some ro).
+ 
+apply EquivThenEqual.
+split.
+intros.
 assert (U : forall m :X, (foI (cng pi x m) f) = (foI (cng (cng pi xi (teI pi t)) x m) fi)).
 intro m.
+
 admit.
 rewrite U.
 apply ap.
