@@ -927,6 +927,12 @@ reflexivity.
 reflexivity.
 Defined.
 
+Lemma IOF xi : PeanoNat.Nat.eqb xi xi = true.
+induction xi.
+simpl. trivial.
+simpl. exact IHxi.
+Defined.
+
 Context (t : Terms).
 Definition lem2 : forall (fi : Fo) (xi : SetVars) (pi : SetVars->X)
 (r:Fo) (H:(substF t xi fi) = Some r), (*(SH:sig (fun(r:Fo)=>(substF t xi fi) = Some r)),*)
@@ -1059,11 +1065,6 @@ rewrite e in k1.
 Check not_iff_compat.
 Check PeanoNat.Nat.eqb_eq x xi.
 Check not_iff_compat (PeanoNat.Nat.eqb_eq x xi).
-Lemma IOF xi : PeanoNat.Nat.eqb xi xi = true.
-induction xi.
-simpl. trivial.
-simpl. exact IHxi.
-Defined.
 rewrite -> (IOF xi) in k1.
 inversion k1.
 pose (n2:= not_eq_sym n).
@@ -1072,7 +1073,85 @@ pose (n3:= proj2 (not_iff_compat (PeanoNat.Nat.eqb_eq xi x)) n2).
 apply not_true_is_false.
 exact n3.
 (* FORALL case is proved but with funext! *)
-+
++ intros r H.
+  (*simpl in * |- *.
+  destruct (PeanoNat.Nat.eqb x xi) eqn:j0.
+  * destruct (isParamF xi (Fora x fi) ) eqn:tuc.
+    - 
+  simpl.*)
+ destruct (isParamF xi (Fora x fi) ) eqn:tuc.
+2 : { 
+Check NPthenNCASF.
+rewrite NPthenNCASF in H.
+ pose (Q:=SomeInj _ _ H).
+rewrite <- Q.
+apply lem2.
+pose (J:=(PeanoNat.Nat.eqb x xi)).
+simpl.
+simpl in tuc.
+destruct (PeanoNat.Nat.eqb x xi) (*as [J0|J1]*).
+reflexivity.
+destruct (isParamF xi fi).
+inversion tuc.
+reflexivity.
+assumption.
+}
+simpl in tuc.
+simpl in H.
+destruct (PeanoNat.Nat.eqb x xi) eqn:k1.
+inversion tuc.
+rewrite tuc in H.
+destruct (isParamT x t) eqn:k2.
+inversion H.
+destruct (substF t xi fi) eqn:k3.
+2 : inversion H.
+pose(Q:=SomeInj _ _ H).
+rewrite <- Q.
+simpl in *|-*.
+assert (AS0 : exists ro:Fo, (substF t xi fi) = Some ro).
+ exists f.
+ exact k3. clear AS0.
+apply EquivThenEqual.
+split.
+intros.
+destruct H0 as [m K].
+(*pose (K:=H0 m).*)
+rewrite -> lem2 with (fi:=fi) (xi:=xi) in K .
+2 : exact k3.
+rewrite -> mqd in K.
+2 : exact k2. (* x and xi are different so they are interchangeable *)
+simpl.
+rewrite cng_commEXT in K.
+exact K.
+exact k1.
+
+intros.
+pose (K:=H0 m).
+rewrite cng_commEXT in K.
+
+rewrite <- mqd with (x:=x) (t:=t)(m:=m) in K.
+
+Check lem2 fi xi (cng pi x m) f k3.
+rewrite <- lem2 with (fi:=fi) (xi:=xi) (r:=f) in K .
+exact K.
+exact k3.
+exact k2.
+Check reflect.
+
+destruct (PeanoNat.Nat.eq_dec x xi) eqn:w.
+rewrite e in k1.
+Check not_iff_compat.
+Check PeanoNat.Nat.eqb_eq x xi.
+Check not_iff_compat (PeanoNat.Nat.eqb_eq x xi).
+rewrite -> (IOF xi) in k1.
+inversion k1.
+pose (n2:= not_eq_sym n).
+Check not_iff_compat (PeanoNat.Nat.eqb_eq x xi).
+pose (n3:= proj2 (not_iff_compat (PeanoNat.Nat.eqb_eq xi x)) n2).
+apply not_true_is_false.
+exact n3.
+(* EXISTS case is proved but with funext! *)
+Defined.
 
 auto with arith.
 compute in k1.
