@@ -1046,6 +1046,25 @@ exists m.
     apply q.
 Defined.
 
+Lemma cng_commF_EQV  xe xi m0 m1 pi fi :
+PeanoNat.Nat.eqb xe xi = false -> 
+(foI (cng (cng pi xe m0) xi m1) fi <-> foI (cng (cng pi xi m1) xe m0) fi).
+Proof.
+intros H.
+apply weafunF.
+intros z.
+unfold cng.
+destruct (PeanoNat.Nat.eqb z xi) eqn:e0, (PeanoNat.Nat.eqb z xe) eqn:e1.
+pose (U0:= proj1 (PeanoNat.Nat.eqb_eq z xi) e0).
+rewrite U0 in e1.
+pose (U1:= proj1 (PeanoNat.Nat.eqb_eq xi xe) e1).
+symmetry in U1.
+pose (U2:= proj2 (PeanoNat.Nat.eqb_eq xe xi) U1).
+rewrite U2 in H.
+inversion H.
+reflexivity. reflexivity. reflexivity.
+Defined.
+
 Fixpoint cng_commF_EQV  xe xi m0 m1 pi fi :
 PeanoNat.Nat.eqb xe xi = false -> 
 (foI (cng (cng pi xe m0) xi m1) fi <-> foI (cng (cng pi xi m1) xe m0) fi).
