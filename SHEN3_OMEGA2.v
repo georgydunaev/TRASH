@@ -903,12 +903,80 @@ apply H0.
 exact (all_then_someP _ _ p1 _ (isParamT x) H).
 Defined.
 
-Lemma cng_commF  x xi m0 m1 pi fi :
+Lemma IOF xi : PeanoNat.Nat.eqb xi xi = true.
+induction xi.
+simpl. trivial.
+simpl. exact IHxi.
+Defined.
+
+Lemma cng_commT  x xi m0 m1 pi t :
 PeanoNat.Nat.eqb x xi = false -> 
-foI (cng (cng pi x m0) xi m1) fi = foI (cng (cng pi xi m1) x m0) fi.
+teI (cng (cng pi x m0) xi m1) t = teI (cng (cng pi xi m1) x m0) t.
 Proof. intro i.
-destruct fi.
+revert pi.
+induction t; intro pi.
 simpl.
+unfold cng.
+(*destruct (Nat.eqb x xi) eqn:j.
+inversion i. NO*)
+Check not_iff_compat (PeanoNat.Nat.eqb_eq x xi).
+pose (n3:= proj1 (not_iff_compat (PeanoNat.Nat.eqb_eq x xi)) ).
+Check proj2 (not_true_iff_false (PeanoNat.Nat.eqb x xi)).
+pose (n4:= n3 (proj2 (not_true_iff_false (PeanoNat.Nat.eqb x xi)) i)).
+Require Import Arith.Peano_dec.
+Check eq_nat_dec.
+destruct (PeanoNat.Nat.eq_dec sv xi).
+rewrite -> e.
+rewrite -> IOF.
+destruct (PeanoNat.Nat.eq_dec x xi).
+destruct (n4 e0).
+pose (hi := (not_eq_sym n)).
+
+Check not_true_iff_false .
+pose (ih:= not_true_is_false _ (proj2 (not_iff_compat (PeanoNat.Nat.eqb_eq xi x)) hi)).
+rewrite ih.
+reflexivity.
+pose (ih:= not_true_is_false _ (proj2 (not_iff_compat (PeanoNat.Nat.eqb_eq sv xi)) n)).
+rewrite -> ih.
+reflexivity.
+simpl.
+apply ap.
+apply eq_nth_iff.
+intros p1 p2 HU.
+
+Check nth_map (teI (cng (cng pi x m0) xi m1)) v p1 p2 HU.
+rewrite -> (nth_map (teI (cng (cng pi x m0) xi m1)) v p1 p2 HU).
+Check nth_map.
+rewrite -> (nth_map (teI (cng (cng pi xi m1) x m0)) v p2 p2 eq_refl).
+apply H.
+Defined.
+
+Lemma cng_commF  xe xi m0 m1 pi fi :
+PeanoNat.Nat.eqb xe xi = false -> 
+foI (cng (cng pi xe m0) xi m1) fi = foI (cng (cng pi xi m1) xe m0) fi.
+Proof. intro i. revert pi m0 m1 xe xi i.
+induction fi; intros pi m0 m1 xe xi i.
++ simpl.
+  apply ap.
+  apply eq_nth_iff.
+  intros p1 p2 HU.
+  rewrite -> (nth_map (teI (cng (cng pi xe m0) xi m1)) t p1 p2 HU).
+  rewrite -> (nth_map (teI (cng (cng pi xi m1) xe m0)) t p2 p2 eq_refl).
+  apply cng_commT.
+  exact i.
++ simpl. reflexivity.
++ simpl. rewrite -> IHfi1.  rewrite -> IHfi2. reflexivity. exact i. exact i.
++ simpl. rewrite -> IHfi1.  rewrite -> IHfi2. reflexivity.  exact i. exact i.
++ simpl. rewrite -> IHfi1.  rewrite -> IHfi2. reflexivity. exact i. exact i.
++ simpl. apply EquivThenEqual. split. intros.
+
+ Check IHfi (cng pi xi m1) m0 m xe xi i.
+ (*
+ rewrite 
+ rewrite <- IHfi.  rewrite -> IHfi2. reflexivity.
+ reflexivity.
+ *)
+ 
 Abort. (* TODO replace cng_commEXT with cng_commF and cng_commT *)
 
 Lemma cng_commEXT  x xi m0 m1 pi :
@@ -927,11 +995,7 @@ reflexivity.
 reflexivity.
 Defined.
 
-Lemma IOF xi : PeanoNat.Nat.eqb xi xi = true.
-induction xi.
-simpl. trivial.
-simpl. exact IHxi.
-Defined.
+
 
 Context (t : Terms).
 Definition lem2 : forall (fi : Fo) (xi : SetVars) (pi : SetVars->X)
@@ -1118,6 +1182,7 @@ destruct H0 as [m K].
 (*pose (K:=H0 m).*)
 rewrite -> lem2 with (fi:=fi) (xi:=xi) in K .
 2 : exact k3.
+(* TODO: adapt this part from FORALL case to EXISTS case.
 rewrite -> mqd in K.
 2 : exact k2. (* x and xi are different so they are interchangeable *)
 simpl.
@@ -1151,7 +1216,8 @@ pose (n3:= proj2 (not_iff_compat (PeanoNat.Nat.eqb_eq xi x)) n2).
 apply not_true_is_false.
 exact n3.
 (* EXISTS case is proved but with funext! *)
-Defined.
+Defined.*)
+Admitted.
 
 auto with arith.
 compute in k1.
