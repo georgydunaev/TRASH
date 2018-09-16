@@ -3,13 +3,13 @@
 Require Export Coq.Vectors.Vector.
 Require Export Coq.Lists.List.
 Require Import Bool.Bool.
-Require Import Logic.FunctionalExtensionality.
+(*Require Import Logic.FunctionalExtensionality.*)
 Require Import Coq.Program.Wf.
 Require Import Lia.
 Add LoadPath "/home/user/0my/COQ".
 Require Export UNIV_INST.
 
-Require Import Logic.ClassicalFacts.
+(*Require Import Logic.ClassicalFacts.*)
 (*Axiom EquivThenEqual: prop_extensionality.*)
 
 Inductive myeq (A : Type) (x : A) : A -> Type :=
@@ -583,7 +583,7 @@ destruct f.
 (** (\pi + (\xi \mapsto ?) ) **)
 Definition cng (val:SetVars -> X) (xi:SetVars) (m:X) :=
 (fun r:SetVars =>
-match Nat.eqb r xi with
+match PeanoNat.Nat.eqb r xi with
 | true => m
 | false => (val r)
 end).
@@ -620,7 +620,7 @@ match Nat.eqb r x with
 end
 ) f*)
 + exact (exists m:X, foI (fun r:SetVars =>
-match Nat.eqb r x with
+match PeanoNat.Nat.eqb r x with
 | true => m
 | false => (val r)
 end
@@ -1065,120 +1065,8 @@ inversion H.
 reflexivity. reflexivity. reflexivity.
 Defined.
 
-Fixpoint cng_commF_EQV  xe xi m0 m1 pi fi :
-PeanoNat.Nat.eqb xe xi = false -> 
-(foI (cng (cng pi xe m0) xi m1) fi <-> foI (cng (cng pi xi m1) xe m0) fi).
-Proof. intro i. (*revert pi m0 m1 xe xi i.*)
-induction fi(*; intros pi m0 m1 xe xi i*).
-+ simpl.
-  apply EqualThenEquiv.
-  apply ap.
-  apply eq_nth_iff.
-  intros p1 p2 HU.
-  rewrite -> (nth_map (teI (cng (cng pi xe m0) xi m1)) t p1 p2 HU).
-  rewrite -> (nth_map (teI (cng (cng pi xi m1) xe m0)) t p2 p2 eq_refl).
-  apply cng_commT.
-  exact i.
-+ simpl. reflexivity.
-+ simpl. rewrite -> IHfi1.  rewrite -> IHfi2. reflexivity.
-+ simpl. rewrite -> IHfi1.  rewrite -> IHfi2. reflexivity.
-+ simpl.
-unfold OImp.
-split;
-intros;
-apply (IHfi2 (*pi m0 m1 xe xi i*));
-apply H;
-apply (IHfi1 (*pi m0 m1 xe xi i*));
-apply H0. (*twice*)
-+ simpl. split. intros.
-Check cng_commF_EQV x  xe m  m0 .
-Check (cng_commF_EQV xe x m0  m).
- pose (hm:= H m).
-Print cng.
-Print foI.
-*
-Abort.
-
-Lemma commu : foI (cng pi x m) fi = 
-(* destruct fi. simpl. simpl in hm.
-6 : { simpl.
-NE VARIANT, TOLKO HUZHE *)
-
-
-unfold foI.
-(* foI (cng (cng (cng pi xi m1) xe m0) x m) fi *) *)
-apply (cng_commF_EQV xe x m0  m).
-(* foI (cng (cng (cng pi xi m1) x m) xe m0) fi *)
-apply (cng_commF_EQV x  xe m  m0).
-
-Check cng_commF_EQV xe xi m0 m1 .
-apply cng_commF_EQV.
-2 : apply cng_commF_EQV.
-3 : apply cng_commF_EQV.
-4 : apply cng_commF_EQV.
-apply IHfi.
-
-Lemma cng_commF_EQV  xe xi m0 m1 pi fi :
-PeanoNat.Nat.eqb xe xi = false -> 
-(foI (cng (cng pi xe m0) xi m1) fi <-> foI (cng (cng pi xi m1) xe m0) fi).
-Proof. intro i. revert pi m0 m1 xe xi i.
-induction fi; intros pi m0 m1 xe xi i.
-+ simpl.
-  apply EqualThenEquiv.
-  apply ap.
-  apply eq_nth_iff.
-  intros p1 p2 HU.
-  rewrite -> (nth_map (teI (cng (cng pi xe m0) xi m1)) t p1 p2 HU).
-  rewrite -> (nth_map (teI (cng (cng pi xi m1) xe m0)) t p2 p2 eq_refl).
-  apply cng_commT.
-  exact i.
-+ simpl. reflexivity.
-+ simpl. rewrite -> IHfi1.  rewrite -> IHfi2. reflexivity. exact i. exact i.
-+ simpl. rewrite -> IHfi1.  rewrite -> IHfi2. reflexivity. exact i. exact i.
-+ simpl.
-unfold OImp.
-split ;
-intros;
-apply (IHfi2 pi m0 m1 xe xi i);
-apply H;
-apply (IHfi1 pi m0 m1 xe xi i);
-apply H0. (*twice*)
-
-(*rewrite ->(IHfi1 pi m0 m1 xe xi i) in H.
-pose (u:=foI (cng (cng pi xe m0) xi m1) fi1 ).
-fold u.
-pose (ueq:=(IHfi1 pi m0 m1 xe xi i)).
-fold u in ueq.
-pose (u1 := foI (cng (cng pi xi m1) xe m0) fi1).
-Lemma tyg (x y:Prop) (h:x<->y) (P:Prop->Prop)
-(V:forall a b, (a <-> b)->((P a)<->(P b)))
-: (P x) -> (P y).
-intro b.
-Check Proper.
-rewrite h in b.
-
-rewrite <- ueq in u1.
-Check (IHfi1 pi m0 m1 xe xi i).
-Check IHfi1 (cng pi xe m0).
-rewrite -> IHfi1.  rewrite -> IHfi2. reflexivity. exact i. exact i.*)
-+ simpl. split. intros.
- Check proj1 (IHfi (cng pi xi m1) m0 m xe xi i).
-apply IHfi.
-2 : {
-apply IHfi.
-2 : {
-exact H.
-apply (IHfi (cng pi xi m1) m0 m xe xi i).
- apply EquivThenEqual. 
-
- (*
- rewrite 
- rewrite <- IHfi.  rewrite -> IHfi2. reflexivity.
- reflexivity.
- *)
- 
-Abort. (* TODO replace cng_commEXT with cng_commF and cng_commT *)
-
+(* TODO replace cng_commEXT with cng_commF and cng_commT DONE! *)
+(** IT'S GOOD, BUT IT REQUIRES A FUNCTIONAL_EXTENSIONALITY
 Lemma cng_commEXT  x xi m0 m1 pi :
 PeanoNat.Nat.eqb x xi = false -> 
 (cng (cng pi x m0) xi m1) = (cng (cng pi xi m1) x m0). 
@@ -1194,13 +1082,37 @@ reflexivity.
 reflexivity.
 reflexivity.
 Defined.
+**)
 
-
+Lemma AND_EQV : forall A0 B0 A1 B1 : Prop, 
+(A0 <-> A1) -> (B0 <-> B1) -> ((A0 /\ B0) <-> (A1 /\ B1)).
+Proof.
+intros A0 B0 A1 B1 H0 H1.
+rewrite H0.
+rewrite H1.
+reflexivity.
+Defined.
+Lemma OR_EQV : forall A0 B0 A1 B1 : Prop, 
+(A0 <-> A1) -> (B0 <-> B1) -> ((A0 \/ B0) <-> (A1 \/ B1)).
+Proof.
+intros A0 B0 A1 B1 H0 H1.
+rewrite H0.
+rewrite H1.
+reflexivity.
+Defined.
+Lemma IMP_EQV : forall A0 B0 A1 B1 : Prop, 
+(A0 <-> A1) -> (B0 <-> B1) -> ((A0 -> B0) <-> (A1 -> B1)).
+Proof.
+intros A0 B0 A1 B1 H0 H1.
+rewrite H0.
+rewrite H1.
+reflexivity.
+Defined.
 
 Context (t : Terms).
 Definition lem2 : forall (fi : Fo) (xi : SetVars) (pi : SetVars->X)
 (r:Fo) (H:(substF t xi fi) = Some r), (*(SH:sig (fun(r:Fo)=>(substF t xi fi) = Some r)),*)
-(foI pi r)=(foI (cng pi xi (teI pi t)) fi).
+(foI pi r)<->(foI (cng pi xi (teI pi t)) fi).
 Proof.
 fix lem2 1.
 intros fi xi pi.
@@ -1211,6 +1123,7 @@ induction fi.
   pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
   simpl.
+apply EqualThenEquiv.
   (*apply eq_equ.*)
   apply ap.
   apply 
@@ -1226,13 +1139,21 @@ induction fi.
   rewrite -> (nth_map (substT t xi) v p2 p2 eq_refl).
   apply lem1. reflexivity.
 +  simpl in *|-*; intros r H.
-   inversion H. trivial.
+   inversion H. simpl. reflexivity.
 +  simpl in *|-*; intros r H.
   destruct (substF t xi fi1) as [f1|].
   destruct (substF t xi fi2) as [f2|].
   pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
-  apply conj_eq ;   fold foI.
+(* here! *)
+Check conj_eq.
+simpl.
+unfold OAnd.
+apply AND_EQV.
+
+(*apply and_iff_compat_l.
+apply EqualThenEquiv.
+  apply conj_eq ;   fold foI.*)
   simpl in * |- *.
   * apply (IHfi1 f1 eq_refl).
   * apply (IHfi2 f2 eq_refl).
@@ -1244,7 +1165,8 @@ induction fi.
   pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
   simpl in * |- *.
-  apply disj_eq ;   fold foI.
+apply OR_EQV.
+  (*apply disj_eq ;   fold foI.*)
   * apply (IHfi1 f1 eq_refl).
   * apply (IHfi2 f2 eq_refl).
   * inversion H.
@@ -1255,7 +1177,7 @@ induction fi.
   pose (Q:=SomeInj _ _ H).
   rewrite <- Q.
   simpl in * |- *.
-  apply impl_eq ;   fold foI.
+  apply IMP_EQV. (*apply impl_eq ;   fold foI.*)
   * apply (IHfi1 f1 eq_refl).
   * apply (IHfi2 f2 eq_refl).
   * inversion H.
@@ -1298,22 +1220,24 @@ simpl in *|-*.
 assert (AS0 : exists ro:Fo, (substF t xi fi) = Some ro).
  exists f.
  exact k3. clear AS0.
-apply EquivThenEqual.
+(*apply EquivThenEqual.*)
 split.
 intros.
 pose (K:=H0 m).
 rewrite -> lem2 with (fi:=fi) (xi:=xi) in K .
 2 : exact k3.
+(* foI (cng YN xi (teI YN t)) fi*)
 rewrite -> mqd in K.
 2 : exact k2. (* x and xi are different so they are interchangeable *)
 simpl.
-rewrite cng_commEXT in K.
+Check cng_commF_EQV.
+rewrite cng_commF_EQV in K. (*rewrite cng_commEXT in K.*)
 exact K.
 exact k1.
 
 intros.
 pose (K:=H0 m).
-rewrite cng_commEXT in K.
+rewrite cng_commF_EQV in K. (*rewrite cng_commEXT in K.*)
 
 rewrite <- mqd with (x:=x) (t:=t)(m:=m) in K.
 
@@ -1336,7 +1260,7 @@ Check not_iff_compat (PeanoNat.Nat.eqb_eq x xi).
 pose (n3:= proj2 (not_iff_compat (PeanoNat.Nat.eqb_eq xi x)) n2).
 apply not_true_is_false.
 exact n3.
-(* FORALL case is proved but with funext! *)
+(* FORALL case is proved. *)
 + intros r H.
   (*simpl in * |- *.
   destruct (PeanoNat.Nat.eqb x xi) eqn:j0.
@@ -1375,24 +1299,46 @@ simpl in *|-*.
 assert (AS0 : exists ro:Fo, (substF t xi fi) = Some ro).
  exists f.
  exact k3. clear AS0.
-apply EquivThenEqual.
+(*apply EquivThenEqual.*)
+
 split.
 intros.
 destruct H0 as [m K].
 (*pose (K:=H0 m).*)
 rewrite -> lem2 with (fi:=fi) (xi:=xi) in K .
 2 : exact k3.
-(* TODO: adapt this part from FORALL case to EXISTS case.
+(* TODO: adapt this part from FORALL case to EXISTS case. *)
+(* exists (pi xi).  togda nado dok (foI pi fi)? *)
+simpl.
+exists m.
+fold (cng pi x m) in K.
+fold (cng (cng pi xi (teI pi t)) x m) .
+(*pose (YN := (fun r : SetVars => if PeanoNat.Nat.eqb r x then m else pi r)).
+fold YN in K.*)
+Print cng.
+(*cng = 
+fun (val : SetVars -> X) (xi : SetVars) (m : X) (r : SetVars) =>
+if PeanoNat.Nat.eqb r xi then m else val r *)
+Check mqd.
+(*Check mqd _ _ YN.*) (* LABEL2 *)
+(*rewrite <- mqd.*)
+
 rewrite -> mqd in K.
 2 : exact k2. (* x and xi are different so they are interchangeable *)
 simpl.
-rewrite cng_commEXT in K.
+rewrite cng_commF_EQV in K.
+(*rewrite cng_commEXT in K.*)
 exact K.
 exact k1.
 
 intros.
-pose (K:=H0 m).
-rewrite cng_commEXT in K.
+destruct H0 as [m K].
+(*pose (K:=H0 m).*)
+(*rewrite cng_commEXT in K.*)
+exists m.
+fold (cng pi x m) .
+fold (cng (cng pi xi (teI pi t)) x m) in K.
+rewrite cng_commF_EQV in K.
 
 rewrite <- mqd with (x:=x) (t:=t)(m:=m) in K.
 
@@ -1415,8 +1361,8 @@ Check not_iff_compat (PeanoNat.Nat.eqb_eq x xi).
 pose (n3:= proj2 (not_iff_compat (PeanoNat.Nat.eqb_eq xi x)) n2).
 apply not_true_is_false.
 exact n3.
-(* EXISTS case is proved but with funext! *)
-Defined.*)
+(* EXISTS case is proved *)
+Defined. (*TODO: fix ill-formedness *)
 Admitted.
 
 auto with arith.
