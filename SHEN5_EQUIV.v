@@ -544,8 +544,7 @@ End ModBool.
 (*Export ModBool.*)
 Export ModProp. (* + classical axioms *)
 
-(** Correctness theorem **)
-(** for two-valued logic **)
+(** Soundness theorem section **)
 Section cor.
  (* Truth values*)
 Context (X:Type).
@@ -1389,7 +1388,83 @@ fold (cng pi x (teI pi t)).
 apply (lem2 t fi x pi r H).
 apply H0.
 Defined.
+(* PROOF OF THE SOUNDNESS *)
+Theorem correct (f:Fo) (l:list Fo) (m:PR l f) 
+(lfi : forall  (h:Fo), (InL h l)-> forall (val:SetVars->X), (foI val h)) : 
+forall (val:SetVars->X), foI val f.
+Proof.
+revert lfi.
+induction m (* eqn: meq *); intros lfi val.
++ exact (lfi A i _).
++ simpl.
+  intros a b.
+  exact a.
++ simpl.
+  intros a b c.
+  exact (a c (b c)).
++ simpl in *|-*.
+  destruct (substF t xi ph) eqn: j.
+  apply (UnivInst ph val xi t f j).
+  simpl. firstorder.
++ simpl in *|-*.
+  unfold OImp.
+  intros H0 H1 m.
+  apply H0.
+  rewrite -> (NPthenNCACVF xi ps0 m val H).
+  exact H1.
++ simpl in * |- *.
+  unfold OImp in IHm2.
+apply IHm2.
+apply lfi.
+apply IHm1.
+apply lfi. (*  exact (IHm2 IHm1).*)
++ simpl in * |- *.
+  intro m0.
+apply IHm.
+intros h B.
+intro val2.
+apply lfi.
+exact B.
+Defined.
+(** SOUNDNESS IS PROVED **)
+Check PR.
+Print Fo.
+Check Atom.
+Print PSV.
+Check Atom (MPSV 0 2).
+Print Terms.
+Check Atom (MPSV 0 2).
+Print Vector.t.
+Check Vector.cons _ (FVC 1) _ (Vector.cons _ (FVC 0) _ (Vector.nil _ )).
+Check Atom (MPSV 0 2) 
+(Vector.cons _ (FVC 1) _ (Vector.cons _ (FVC 0) _ (Vector.nil _ ))).
+Definition xeqy := Atom (MPSV 0 2) 
+(Vector.cons _ (FVC 1) _ (Vector.cons _ (FVC 0) _ (Vector.nil _ ))).
 
+Theorem upr : PR (xeqy::nil) (Fora 2 xeqy).
+Proof.
+apply GEN.
+apply hyp.
+simpl. (*Print "+"%type.*) 
+apply inl.
+reflexivity.
+Defined.
+(* PR is from provability, but it is better to call it derivability.*)
+
+Theorem badcorrect (x1 x2 : X) (nequ : ~(x1=x2))
+(f:Fo) (l:list Fo) (m:PR l f) :
+~ (forall(val:SetVars->X) (lfi : forall h:Fo, (InL h l)->(foI val h)), foI val f).
+Proof.
+intro H.
+assert (val:SetVars->X).
+ intro n. destruct n eqn:nn. exact x1.
+          destruct s eqn:ss. exact x2. exact x2.
+Abort.
+End cor.
+
+End VS.
+
+(* IT IS NOT POSSIBLE TO PROVE THIS THEOREM:
 Fixpoint correct (f:Fo) (l:list Fo) (val:SetVars->X) (m:PR l f) 
 (lfi : forall h:Fo, (InL h l)->(foI val h)) {struct m}: foI val f.
 Proof.
@@ -1429,6 +1504,17 @@ Check NPthenNCACVF xi ps0 m val H.
   apply (UnivInst ph val xi t f j).
   simpl. firstorder.
 
+*)
+
+
+(* old trash
+unfold InL in B.
+(*Check correct A l val m lfi.*)
+Check NPthenNCACVF xi ps0 m val H.
+  destruct (substF t xi ph) eqn: j.
+  apply (UnivInst ph val xi t f j).
+  simpl. firstorder.
+
 
 
   2 : { simpl. trivial. unfold OImp. firstorder. }
@@ -1455,21 +1541,4 @@ simpl.
   unfold foI. 
   simpl.
 *)
-Abort.
-
-End cor.
-(* Definition ACK : list Fo := . *)
-
-End VS.
-
-(*Theorem AA (a:nat):nat.
-elim a;
-[> revert a | idtac 1].
-elim a;
-[> idtac 1 | idtac 1].
-destruct a.
-(*Unfocus.*)
-[> idtac 1 | idtac 1].*)
-
-
-
+Abort. *)
