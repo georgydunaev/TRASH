@@ -1367,6 +1367,28 @@ rewrite -> (eqb_comm x xi).
 exact l2.
 Defined.
 
+Lemma UnivInst : forall (fi:Fo) (pi:SetVars->X) (x:SetVars) (t:Terms)
+(r:Fo) (H:(substF t x fi)=Some r), foI pi (Impl (Fora x fi) r).
+Proof.
+intros fi pi x t r H.
+simpl.
+intro H0.
+apply (lem2 t fi x pi r H).
+apply H0.
+Defined.
+
+Lemma ExisGene : forall (fi:Fo) (pi:SetVars->X) (x:SetVars) (t:Terms)
+(r:Fo) (H:(substF t x fi)=Some r), foI pi (Impl r (Exis x fi)).
+Proof.
+intros fi pi x t r H.
+simpl.
+intro H0.
+exists (teI pi t).
+fold (cng pi x (teI pi t)).
+apply (lem2 t fi x pi r H).
+apply H0.
+Defined.
+
 (* END OF LEM2 *)
 
 End Lem2.
