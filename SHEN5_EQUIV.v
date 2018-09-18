@@ -1365,7 +1365,8 @@ symmetry.
 exact (NPthenNCACVF xi fi (teI pi t) (cng pi x m) l1).
 rewrite -> (eqb_comm x xi).
 exact l2.
-Defined.
+Defined. (* END OF LEM2 *)
+End Lem2.
 
 Lemma UnivInst : forall (fi:Fo) (pi:SetVars->X) (x:SetVars) (t:Terms)
 (r:Fo) (H:(substF t x fi)=Some r), foI pi (Impl (Fora x fi) r).
@@ -1389,17 +1390,11 @@ apply (lem2 t fi x pi r H).
 apply H0.
 Defined.
 
-(* END OF LEM2 *)
-
-End Lem2.
-
-(* lem2  is not proven yet! *) 
-
-
 Fixpoint correct (f:Fo) (l:list Fo) (val:SetVars->X) (m:PR l f) 
 (lfi : forall h:Fo, (InL h l)->(foI val h)) {struct m}: foI val f.
 Proof.
-destruct m (* eqn: meq *).
+revert val lfi.
+induction m (* eqn: meq *); intros val lfi.
 + exact (lfi A i).
 + simpl.
   intros a b.
@@ -1407,13 +1402,51 @@ destruct m (* eqn: meq *).
 + simpl.
   intros a b c.
   exact (a c (b c)).
-+ destruct (substF t xi ph) eqn: j.
++ simpl in *|-*.
+  destruct (substF t xi ph) eqn: j.
+  apply (UnivInst ph val xi t f j).
+  simpl. firstorder.
++ simpl in *|-*.
+  unfold OImp.
+  intros H0 H1 m.
+  apply H0.
+  rewrite -> (NPthenNCACVF xi ps0 m val H).
+  exact H1.
++ simpl in * |- *.
+  unfold OImp in IHm2.
+apply IHm2.
+apply lfi.
+apply IHm1.
+apply lfi. (*  exact (IHm2 IHm1).*)
++ simpl in * |- *.
+  intro m0.
+apply IHm.
+intros h B.
+unfold InL in B.
+(*Check correct A l val m lfi.*)
+Check NPthenNCACVF xi ps0 m val H.
+  destruct (substF t xi ph) eqn: j.
+  apply (UnivInst ph val xi t f j).
+  simpl. firstorder.
+
+
+
   2 : { simpl. trivial. unfold OImp. firstorder. }
   apply (correct _ l).
   2 : {assumption. }
   simpl.
+Check fun pi => UnivInst ph pi xi t f j. 
+(*forall pi : SetVars -> X, foI pi (Impl (Fora xi ph) f)*)
+Show Proof.
+Check PR.
 pose (Z:=(@Ded (Fora xi ph) f l )).
 simple refine (Z _ _ ).
+Check correct.
+apply correct.
+2 : { 
+intros.
+Check notGenWith.
+simpl.
 (*
   pose (W:= lfi f).
   destruct (Nat.eqb r xi).
